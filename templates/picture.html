@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ picture.caption or picture.filename }} - Caption Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #333;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .navbar h2 {
+            color: white;
+            margin: 0;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navbar a:hover {
+            background-color: #555;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .picture-wrapper {
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            padding: 20px;
+        }
+        .picture-wrapper img {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        .picture-info {
+            margin-top: 20px;
+            width: 100%;
+            text-align: center;
+        }
+        .picture-info h1 {
+            color: #333;
+            font-size: 24px;
+            margin: 10px 0;
+            word-break: break-word;
+        }
+        .picture-info p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .picture-caption {
+            color: #555;
+            font-size: 16px;
+            font-style: italic;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-left: 4px solid #007BFF;
+            border-radius: 4px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #007BFF;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        @media (max-width: 768px) {
+            .picture-wrapper {
+                padding: 15px;
+            }
+            .picture-info h1 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>🎬 Caption Gallery</h2>
+        <div>
+            <a href="{{ url_for('home') }}">← Back</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="picture-wrapper">
+            <img src="{{ url_for('uploaded_file', filename=picture.filename) }}" alt="{{ picture.caption or picture.filename }}">
+            
+            <div class="picture-info">
+                {% if picture.caption %}
+                    <div class="picture-caption">
+                        "{{ picture.caption }}"
+                    </div>
+                {% endif %}
+                
+                <p><strong>Filename:</strong> {{ picture.filename }}</p>
+                <p><strong>Picture ID:</strong> {{ picture.id }}</p>
+                
+                {% if current_user.is_authenticated and current_user.id == picture.user %}
+                    <div class="actions">
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Gallery</a>
+                        <button class="btn btn-primary" onclick="generateCaption()" id="captionBtn">✨ Generate Caption</button>
+                    </div>
+                    
+                    <script>
+                        function generateCaption() {
+                            const btn = document.getElementById('captionBtn');
+                            btn.disabled = true;
+                            btn.textContent = '⏳ Generating...';
+                            
+                            fetch('{{ url_for("generate_caption_api", picture_id=picture.id) }}', {
+                                method: 'POST',
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Update caption on page
+                                    location.reload();
+                                } else {
+                                    alert('Error: ' + data.error);
+                                    btn.disabled = false;
+                                    btn.textContent = '✨ Generate Caption';
+                                }
+                            })
+                            .catch(error => {
+                                alert('Error: ' + error);
+                                btn.disabled = false;
+                                btn.textContent = '✨ Generate Caption';
+                            });
+                        }
+                    </script>
+                {% else %}
+                    <div class="actions">
+                        <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Gallery</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
