@@ -50,6 +50,7 @@ def load_user(user_id):
 
 # Routes
 @app.route('/')
+@login_required
 def home():
     pictures = []
     if current_user.is_authenticated:
@@ -118,15 +119,8 @@ def upload():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(filepath)
         
-        # Generate caption using the caption model
-        try:
-            caption = caption_model.generate_caption(filepath)
-        except Exception as e:
-            app.logger.error(f"Error generating caption: {e}")
-            caption = "Error generating caption"
-        
         # Save to database
-        picture = Picture(filename=unique_filename, caption=caption, user=current_user.id)
+        picture = Picture(filename=unique_filename, user=current_user.id)
         db.session.add(picture)
         db.session.commit()
         

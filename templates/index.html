@@ -133,8 +133,6 @@
     
     <div class="container">
         <h1>🎬 Caption Gallery</h1>
-        <p>Flask application with authentication is running successfully!</p>
-        <div class="status">✓ Application Active</div>
         
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('upload') }}" class="upload-btn">📸 Upload Image</a>
